@@ -6,7 +6,6 @@
 *.dylib
 *.test
 *.out
-*.yml
 
 # Build output
 /bin/
