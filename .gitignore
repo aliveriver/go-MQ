@@ -1,0 +1,58 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.yml
+
+# Build output
+/bin/
+/build/
+/dist/
+
+# Go package objects and cached files
+/pkg/
+
+# Dependency vendor directory (optional - keep if you commit vendor)
+/vendor/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.iml
+*.swp
+*~
+
+# macOS/Windows
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
+*.tmp
+
+# Environment files
+.env
+
+# Test coverage
+coverage.out
+
+# Generated docs (if you generate swagger or other docs)
+/docs/
+
+# Local config overrides (keep repo config/config.yml; ignore local overrides/secrets)
+config/*.local.yml
+config/*.secret.yml
+
+# Node (if present)
+node_modules/
+
+# Misc
+*.bak
+*.old
+
+# If you prefer to ignore the compiled binary in the project root, uncomment:
+# /go-MQ
