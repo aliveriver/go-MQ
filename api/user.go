@@ -70,14 +70,14 @@ func (ua UserAPI) LoginHandler(ctx *gin.Context) {
 			return
 		}
 
-		err, user, tokenExpiresAt, token = service.UserServiceEntity.LoginByID(userID, req.Password)
+		user, tokenExpiresAt, token, err = service.UserServiceEntity.LoginByID(userID, req.Password)
 		if err != nil {
 			logrus.Warn("用户登录失败:", err, req.UserName)
 			common.SendErrorResponse(ctx, err.Error())
 			return
 		}
 	} else {
-		err, user, tokenExpiresAt, token = service.UserServiceEntity.LoginByEmail(req.UserName, req.Password)
+		user, tokenExpiresAt, token, err = service.UserServiceEntity.LoginByEmail(req.UserName, req.Password)
 		if err != nil {
 			logrus.Warn("用户登录失败:", err, req.UserName)
 			common.SendErrorResponse(ctx, err.Error())
