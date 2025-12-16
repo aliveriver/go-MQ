@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	request "go-MQ/entity/request"
+
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -101,9 +103,52 @@ func (us UserService) LoginByID(ID uint64, password string) (entity.User, int64,
 	return *user, tokenExpiresAt, token, nil
 }
 
-func (us UserService) UpdateUserInfo(ID uint64) (entity.User, error) {
+func (us UserService) Logout(jti string, expiresAt int64) error {
+	if err := common.AddInvalidToken(jti, expiresAt); err != nil {
+		logrus.Warn("用户登出失败:", err, jti)
+		return err
+	}
+	return nil
+}
 
-	return entity.User{}, errors.New("not implemented")
+func (us UserService) UpdateUserInfo(user request.RegisterUserRequest, userID uint64) error {
+	data := make(map[string]interface{})
+	if user.UserName != "" {
+		if err := IsInvailUserName(user.UserName); err != nil {
+			logrus.Warn("用户注册用户名已被使用:", user.UserName)
+			return err
+		}
+		data["user_name"] = user.UserName
+	}
+
+	if user.Password != "" {
+		if err := IsInvailPassword(user.Password); err != nil {
+			logrus.Warn("用户注册密码不合法:", user.Password)
+			return err
+		}
+		data["password"] = user.Password
+	}
+
+	if user.Email != "" {
+		if err := IsInvailEmail(user.Email); err != nil {
+			logrus.Warn("用户注册邮箱不合法:", user.Email)
+			return err
+		}
+		//TODO: 验证码逻辑
+
+		data["email"] = user.Email
+	}
+
+	if user.Avatar != "" {
+		data["avatar"] = user.Avatar
+	}
+
+	if err := dao.UserDAOEntity.UpdateUser(userID, data); err != nil {
+		logrus.Warn("更新用户信息失败:", err, userID)
+		return err
+	}
+
+	return nil
 }
 
 var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)

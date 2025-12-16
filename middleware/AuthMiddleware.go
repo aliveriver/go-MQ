@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"errors"
 	"go-MQ/common"
 	"go-MQ/entity"
@@ -9,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func checkToken(tokenString string) (*common.Claims, error) {
+func checkToken(ctx context.Context, tokenString string) (*common.Claims, error) {
 	//验证格式
 	if tokenString == "" || !strings.HasPrefix(tokenString, "Bearer ") {
 		return nil, errors.New("未找到token或token格式错误")
@@ -20,6 +21,10 @@ func checkToken(tokenString string) (*common.Claims, error) {
 	if err != nil || !token.Valid {
 		return nil, errors.New("token无效")
 	}
+	n, _ := common.GetRedisClient().Exists(ctx, "blacklist:"+claim.Id).Result()
+	if n > 0 {
+		return nil, errors.New("token已失效")
+	}
 	return claim, nil
 }
 
@@ -28,7 +33,7 @@ func UserAuthMiddleware() gin.HandlerFunc {
 		//获取authorization header
 		tokenString := ctx.GetHeader("Authorization")
 
-		claim, err := checkToken(tokenString)
+		claim, err := checkToken(ctx, tokenString)
 		if err != nil {
 			common.SendErrorResponse(ctx, err.Error())
 			ctx.Abort()
@@ -58,6 +63,7 @@ func UserAuthMiddleware() gin.HandlerFunc {
 			expiresAtMs = 0
 		}
 		ctx.Set("TokenExpiresAt", expiresAtMs)
+		ctx.Set("jti", claim.Id)
 
 		ctx.Next()
 	}

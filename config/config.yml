@@ -9,3 +9,6 @@ database:
   loc: Asia%2FShanghai
 jwt:
   jwtkey: xxxxxxxxxxxxxx
+redis:
+  address: 127.0.0.1
+  password:

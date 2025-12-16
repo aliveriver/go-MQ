@@ -35,6 +35,7 @@ func Init() {
 	InitConfig()
 	common.InitLogrus()
 	common.InitDB()
+	common.InitRedis()
 }
 
 var configFile []byte

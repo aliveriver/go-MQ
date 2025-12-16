@@ -16,7 +16,7 @@ type UserAPI struct{}
 
 var UserAPIEntity = UserAPI{}
 
-func (ua UserAPI) RegisterHandler(ctx *gin.Context) {
+func (ua UserAPI) Register(ctx *gin.Context) {
 	var req request.RegisterUserRequest
 	if err := ctx.ShouldBindJSON(&req); err != nil {
 		logrus.Warn("用户注册参数绑定失败:", err)
@@ -49,7 +49,7 @@ func (ua UserAPI) RegisterHandler(ctx *gin.Context) {
 	common.SendSuccessResponse(ctx, "注册成功", response)
 }
 
-func (ua UserAPI) LoginHandler(ctx *gin.Context) {
+func (ua UserAPI) Login(ctx *gin.Context) {
 	var (
 		err            error
 		user           entity.User
@@ -97,4 +97,31 @@ func (ua UserAPI) LoginHandler(ctx *gin.Context) {
 		TokenExpiresAt: tokenExpiresAt,
 	}
 	common.SendSuccessResponse(ctx, "登录成功", response)
+}
+
+func (ua UserAPI) Logout(ctx *gin.Context) {
+	jti := ctx.GetString("jti")
+	expiresAt := ctx.GetInt64("TokenExpiresAt")
+	err := service.UserServiceEntity.Logout(jti, expiresAt)
+	if err != nil {
+		common.SendErrorResponse(ctx, "退出登录失败:"+err.Error())
+		return
+	}
+	common.SendSuccessResponse(ctx, "已退出登录", nil)
+	return
+}
+
+func (ua UserAPI) UpdateUserInfo(ctx *gin.Context) {
+	var req request.RegisterUserRequest
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		logrus.Warn("用户更新信息参数绑定失败:", err)
+		common.SendErrorResponse(ctx, "invalid parameters")
+		return
+	}
+	user, _ := ctx.Get("user")
+	if err := service.UserServiceEntity.UpdateUserInfo(req, user.(entity.User).ID); err != nil {
+		common.SendErrorResponse(ctx, err.Error())
+		return
+	}
+	common.SendSuccessResponse(ctx, "用户信息更新成功", nil)
 }
