@@ -112,13 +112,21 @@ func (us UserService) Logout(jti string, expiresAt int64) error {
 }
 
 func (us UserService) UpdateUserInfo(user request.RegisterUserRequest, userID uint64) error {
+
+	olduser, err := dao.UserDAOEntity.GetUserByID(userID)
+	if err != nil {
+		logrus.Warn("用户登录通过ID获取用户失败:", err, userID)
+		return errors.New("用户登录通过ID获取用户失败")
+	}
 	data := make(map[string]interface{})
 	if user.UserName != "" {
 		if err := IsInvailUserName(user.UserName); err != nil {
 			logrus.Warn("用户注册用户名已被使用:", user.UserName)
 			return err
 		}
-		data["user_name"] = user.UserName
+		if olduser.UserName != user.UserName {
+			data["user_name"] = user.UserName
+		}
 	}
 
 	if user.Password != "" {
@@ -126,20 +134,29 @@ func (us UserService) UpdateUserInfo(user request.RegisterUserRequest, userID ui
 			logrus.Warn("用户注册密码不合法:", user.Password)
 			return err
 		}
-		data["password"] = user.Password
+		if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(olduser.Password)); err != nil {
+			hasedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+			if err != nil {
+				logrus.Error("密码加密失败:", err)
+				return err
+			}
+			data["password"] = string(hasedPassword)
+		}
 	}
 
 	if user.Email != "" {
-		if err := IsInvailEmail(user.Email); err != nil {
-			logrus.Warn("用户注册邮箱不合法:", user.Email)
-			return err
-		}
-		//TODO: 验证码逻辑
+		if olduser.Email != user.Email {
+			if err := IsInvailEmail(user.Email); err != nil {
+				logrus.Warn("用户注册邮箱不合法:", user.Email)
+				return err
+			}
+			//TODO: 验证码逻辑
 
-		data["email"] = user.Email
+			data["email"] = user.Email
+		}
 	}
 
-	if user.Avatar != "" {
+	if user.Avatar != "" && olduser.Avatar != user.Avatar {
 		data["avatar"] = user.Avatar
 	}
 
