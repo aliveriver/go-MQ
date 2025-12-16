@@ -103,9 +103,9 @@ func (us UserService) LoginByID(ID uint64, password string) (entity.User, int64,
 	return *user, tokenExpiresAt, token, nil
 }
 
-func (us UserService) Logout(jti string, expiresAt int64) error {
-	if err := common.AddInvalidToken(jti, expiresAt); err != nil {
-		logrus.Warn("用户登出失败:", err, jti)
+func (us UserService) Logout(userID uint64) error {
+	if err := common.AddInvalidToken(userID); err != nil {
+		logrus.Warn("用户登出失败:", err, userID)
 		return err
 	}
 	return nil

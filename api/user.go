@@ -100,9 +100,8 @@ func (ua UserAPI) Login(ctx *gin.Context) {
 }
 
 func (ua UserAPI) Logout(ctx *gin.Context) {
-	jti := ctx.GetString("jti")
-	expiresAt := ctx.GetInt64("TokenExpiresAt")
-	err := service.UserServiceEntity.Logout(jti, expiresAt)
+	user, _ := ctx.Get("user")
+	err := service.UserServiceEntity.Logout(user.(entity.User).ID)
 	if err != nil {
 		common.SendErrorResponse(ctx, "退出登录失败:"+err.Error())
 		return

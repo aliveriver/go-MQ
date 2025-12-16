@@ -5,9 +5,11 @@ import (
 	"errors"
 	"go-MQ/common"
 	"go-MQ/entity"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 )
 
 func checkToken(ctx context.Context, tokenString string) (*common.Claims, error) {
@@ -21,9 +23,19 @@ func checkToken(ctx context.Context, tokenString string) (*common.Claims, error)
 	if err != nil || !token.Valid {
 		return nil, errors.New("token无效")
 	}
-	n, _ := common.GetRedisClient().Exists(ctx, "blacklist:"+claim.Id).Result()
-	if n > 0 {
-		return nil, errors.New("token已失效")
+	// 获取 Redis 中的值
+	key := "usertoken:" + strconv.FormatUint(claim.UserID, 10)
+	val, err := common.GetRedisClient().Get(ctx, key).Result()
+
+	if err == redis.Nil {
+		// 1. Redis 中不存在该 Key -> 说明登录已过期或从未登录
+		return nil, errors.New("token已失效或过期")
+	} else if err != nil {
+		// 2. Redis 连接或其他错误
+		return nil, err
+	}
+	if val != claim.Id {
+		return nil, errors.New("token已失效或过期")
 	}
 	return claim, nil
 }

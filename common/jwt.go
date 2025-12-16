@@ -2,10 +2,12 @@ package common
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
@@ -33,6 +35,12 @@ func ReleaseToken(userID uint64) (string, int64, error) {
 	if err != nil {
 		return "", 0, err
 	}
+	key := "usertoken:" + strconv.FormatUint(claims.UserID, 10)
+	err = GetRedisClient().Set(context.Background(), key, claims.Id, time.Until(expirationTime)).Err()
+	if err != nil {
+		logrus.Errorf("redis set token error: %v", err)
+		return "", 0, err
+	}
 	return tokenString, expirationTime.UnixMilli(), nil
 }
 
@@ -46,19 +54,15 @@ func ParseToken(tokenString string) (*jwt.Token, *Claims, error) {
 	return token, claims, err
 }
 
-func AddInvalidToken(jti string, ExpiresAt int64) error {
-	// 2. 计算剩余有效期 (ExpiresAt - Now)
-	expiration := time.Unix(ExpiresAt, 0).Sub(time.Now())
+func AddInvalidToken(userID uint64) error {
+	key := "usertoken:" + strconv.FormatUint(userID, 10)
 
-	// 如果已经过期，无需加入黑名单
-	if expiration <= 0 {
-		return nil
+	// 直接删除 key
+	err := GetRedisClient().Del(context.Background(), key).Err()
+	if err != nil {
+		// 处理错误
+		logrus.Errorf("redis del token error: %v", err)
+		return err
 	}
-
-	// 3. 存入 Redis
-	// Key: "blacklist:eyJxh..." (建议加前缀)
-	// Value: "1" (值无所谓)
-	// Expiration: 动态计算出的剩余时间
-	err := GetRedisClient().Set(context.Background(), "blacklist:"+jti, "1", expiration).Err()
-	return err
+	return nil
 }
