@@ -13,5 +13,8 @@ func CollectRoute(r *gin.Engine) *gin.Engine {
 	userapi.POST("/login", api.UserAPIEntity.Login)
 	userapi.POST("/logout", middleware.UserAuthMiddleware(), api.UserAPIEntity.Logout)
 	userapi.PUT("/update", middleware.UserAuthMiddleware(), api.UserAPIEntity.UpdateUserInfo)
+
+	emailapi := r.Group("/verification")
+	emailapi.POST("/send", api.EmailAPIEntity.SendEmailCode)
 	return r
 }
