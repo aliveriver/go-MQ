@@ -12,3 +12,10 @@ jwt:
 redis:
   address: 127.0.0.1:6379
   password:
+email:
+  host: smtp.qiye.aliyun.com
+  port: 465
+  user: mq@matsuzaka.site
+  pass: mq@mt147..
+  from: mq@matsuzaka.site
+  secure: true

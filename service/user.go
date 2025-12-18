@@ -1,11 +1,13 @@
 package service
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"go-MQ/common"
 	"go-MQ/dao"
 	"go-MQ/entity"
+	"go-MQ/tool"
 	"net"
 	"regexp"
 	"strings"
@@ -21,7 +23,7 @@ type UserService struct{}
 
 var UserServiceEntity = UserService{}
 
-func (us UserService) Register(user entity.User, code string) (string, int64, entity.User, error) {
+func (us UserService) Register(ctx context.Context, user entity.User, code string) (string, int64, entity.User, error) {
 	if user.Password == "" || user.UserName == "" {
 		logrus.Warn("用户注册缺少信息")
 		return "", 0, entity.User{}, errors.New("username or password cannot be empty")
@@ -38,7 +40,11 @@ func (us UserService) Register(user entity.User, code string) (string, int64, en
 		logrus.Warn("用户注册密码不合法:", user.Password)
 		return "", 0, entity.User{}, err
 	}
-	//TODO: 校验验证码
+
+	if !tool.IsTrueEmailCode(ctx, user.Email, code) {
+		logrus.Warn("用户注册验证码错误:", user.Email, code)
+		return "", 0, entity.User{}, errors.New("invalid email code")
+	}
 
 	hasedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -111,7 +117,7 @@ func (us UserService) Logout(userID uint64) error {
 	return nil
 }
 
-func (us UserService) UpdateUserInfo(user request.RegisterUserRequest, userID uint64) error {
+func (us UserService) UpdateUserInfo(ctx context.Context, user request.RegisterUserRequest, userID uint64) error {
 
 	olduser, err := dao.UserDAOEntity.GetUserByID(userID)
 	if err != nil {
@@ -150,7 +156,10 @@ func (us UserService) UpdateUserInfo(user request.RegisterUserRequest, userID ui
 				logrus.Warn("用户注册邮箱不合法:", user.Email)
 				return err
 			}
-			//TODO: 验证码逻辑
+			if !tool.IsTrueEmailCode(ctx, user.Email, user.Code) {
+				logrus.Warn("用户注册验证码错误:", user.Email, user.Code)
+				return errors.New("invalid email code")
+			}
 
 			data["email"] = user.Email
 		}

@@ -29,7 +29,8 @@ func (ua UserAPI) Register(ctx *gin.Context) {
 		Password: req.Password,
 		Avatar:   req.Avatar,
 	}
-	token, tokenExpiresAt, user, err := service.UserServiceEntity.Register(requser, req.Code)
+	c := ctx.Request.Context()
+	token, tokenExpiresAt, user, err := service.UserServiceEntity.Register(c, requser, req.Code)
 	if err != nil {
 		logrus.Warn("用户注册失败:", err, user)
 		common.SendErrorResponse(ctx, err.Error())
@@ -118,7 +119,8 @@ func (ua UserAPI) UpdateUserInfo(ctx *gin.Context) {
 		return
 	}
 	user, _ := ctx.Get("user")
-	if err := service.UserServiceEntity.UpdateUserInfo(req, user.(entity.User).ID); err != nil {
+	c := ctx.Request.Context()
+	if err := service.UserServiceEntity.UpdateUserInfo(c, req, user.(entity.User).ID); err != nil {
 		common.SendErrorResponse(ctx, err.Error())
 		return
 	}
