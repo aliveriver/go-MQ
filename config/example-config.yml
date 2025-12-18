@@ -1,0 +1,21 @@
+database:
+  driverName: mysql
+  host: 127.0.0.1
+  port: 3306
+  database: mq
+  username: root
+  password: '123456'
+  charset: utf8mb4
+  loc: Asia%2FShanghai
+jwt:
+  jwtkey: xxxxxxxxxxxxxx
+redis:
+  address: 127.0.0.1:6379
+  password:
+email:
+  host: 123
+  port: 465
+  user: 123
+  pass: 123
+  from: 123
+  secure: true
